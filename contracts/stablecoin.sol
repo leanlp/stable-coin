@@ -1,21 +1,37 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+// import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "./AggregatorV3Interface.sol";
 
 contract StableCoin is ERC20, Ownable {
     IERC20 public collateralToken;
-
+    address public collateralToken2;
+    AggregatorV3Interface internal priceFeed;
     uint256 public collateralizationRate = 150; // Over-collateralization rate in percentage
 
     mapping(address => uint256) public collateral;
 
-    constructor(address _collateralToken) ERC20("StableCoin", "STB") {
+    constructor(address _collateralToken,address _priceFeed) ERC20("StableCoin", "STB") {
         collateralToken = IERC20(_collateralToken);
+        collateralToken2 = _collateralToken;
+        priceFeed = AggregatorV3Interface(_priceFeed);
     }
 
-    function depositCollateral(uint256 collateralAmount) external {
+       function getLatestPrice() public view returns (int) {
+        (
+            uint80 roundID, 
+            int price,
+            uint startedAt,
+            uint timeStamp,
+            uint80 answeredInRound
+        ) = priceFeed.latestRoundData();
+        return price;
+    }
+
+    function depositCollateral(uint256 collateralAmount) external {        
         // Transfer collateral tokens to this contract
         require(
             collateralToken.transferFrom(msg.sender, address(this), collateralAmount),
