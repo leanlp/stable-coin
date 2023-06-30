@@ -13,6 +13,7 @@ contract StableCoin is ERC20, Ownable {
     uint256 public collateralizationRate = 150; // Collateralization rate in percentage
 
     mapping(address => uint256) public collateral;
+    mapping(address => uint256) public debt; // New: track each address's debt
 
     constructor(address _collateralToken, address _priceFeed) ERC20("StableCoin", "STB") {
         collateralToken = IERC20(_collateralToken);
@@ -35,16 +36,28 @@ contract StableCoin is ERC20, Ownable {
         collateral[msg.sender] += collateralAmount;
 
         // Calculate how many stablecoins to mint
-        // You will need to adjust this calculation to take into account the decimals of the price feed
-        
         int latestPrice = getLatestPrice();
         uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice) * 1e18) / collateralizationRate;
+
+        // Increase the user's debt by the minted amount
+        debt[msg.sender] += stablecoinAmount; // New
 
         // Mint the stablecoins to the user
         _mint(msg.sender, stablecoinAmount);
     }
 
+    function repay(uint256 stablecoinAmount) external { // New function for repaying borrowed stablecoins
+        // Burn the user's stablecoins
+        _burn(msg.sender, stablecoinAmount);
+
+        // Decrease the user's debt
+        debt[msg.sender] -= stablecoinAmount;
+    }
+
     function withdrawCollateral(uint256 stablecoinAmount) external {
+        // Ensure the user has repaid their debt
+        require(debt[msg.sender] == 0, "Debt must be repaid before withdrawing collateral.");
+
         // Burn the user's stablecoins
         _burn(msg.sender, stablecoinAmount);
 
