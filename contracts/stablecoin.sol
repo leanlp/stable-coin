@@ -37,7 +37,7 @@ contract StableCoin is ERC20, Ownable {
 
         // Calculate how many stablecoins to mint
         int latestPrice = getLatestPrice();
-        uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice) * 1e18) / collateralizationRate;
+        uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice)) / collateralizationRate;
 
         // Increase the user's debt by the minted amount
         debt[msg.sender] += stablecoinAmount; // New
@@ -54,19 +54,17 @@ contract StableCoin is ERC20, Ownable {
         debt[msg.sender] -= stablecoinAmount;
     }
 
-    function withdrawCollateral(uint256 stablecoinAmount) external {
+    function withdrawCollateral() external {
         // Ensure the user has repaid their debt
         require(debt[msg.sender] == 0, "Debt must be repaid before withdrawing collateral.");
 
-        // Burn the user's stablecoins
-        _burn(msg.sender, stablecoinAmount);
-
         // Calculate how much collateral to return
-        int latestPrice = getLatestPrice();
-        uint256 collateralAmount = (stablecoinAmount * collateralizationRate) / (uint256(latestPrice) * 1e18);
+        // int latestPrice = getLatestPrice();
+        // uint256 collateralAmount = (stablecoinAmount * collateralizationRate) / (uint256(latestPrice));
 
         // Decrease the collateral amount for the user
-        collateral[msg.sender] -= collateralAmount;
+        // collateral[msg.sender] -= collateralAmount;
+       uint collateralAmount = collateral[msg.sender];
 
         // Transfer the collateral tokens back to the user
         require(
