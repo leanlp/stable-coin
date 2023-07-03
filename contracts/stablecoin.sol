@@ -15,7 +15,7 @@ contract StableCoin is ERC20, Ownable {
     mapping(address => uint256) public collateral;
     mapping(address => uint256) public debt; // track each address's debt
 
-    constructor(address _collateralToken, address _priceFeed) ERC20("StableCoin", "STB") {
+    constructor(address _collateralToken, address _priceFeed) ERC20("StableCoin", "sSCC") {
         collateralToken = IERC20(_collateralToken);
         priceFeed = AggregatorV3Interface(_priceFeed);
     }
@@ -37,7 +37,7 @@ contract StableCoin is ERC20, Ownable {
 
         // Calculate how many stablecoins to mint
         int latestPrice = getLatestPrice();
-        uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice)) / collateralizationRate;
+        uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice) *1e12) / collateralizationRate;
 
         // Increase the user's debt by the minted amount
         debt[msg.sender] += stablecoinAmount; // New
@@ -57,7 +57,6 @@ contract StableCoin is ERC20, Ownable {
     function withdrawCollateral() external {
         // Ensure the user has repaid their debt
         require(debt[msg.sender] == 0, "Debt must be repaid before withdrawing collateral.");
-
               
        uint collateralAmount = collateral[msg.sender];
        // Decrease the collateral amount for the user
@@ -69,4 +68,39 @@ contract StableCoin is ERC20, Ownable {
             "Collateral token transfer failed"
         );
     }
+
+    function liquidateIfYouCan(address account) external {
+    // Calculate the current value of the account's collateral
+    int latestPrice = getLatestPrice();
+    uint256 collateralValue = (collateral[account] * uint256(latestPrice) *1e12);
+
+    // Calculate the current value of the account's debt
+    uint256 debtValue = debt[account] * collateralizationRate;
+
+    //
+    require(collateralValue < debtValue, "Account is not undercollateralized.");
+
+    // Transfer all collateral tokens to the liquidator
+    require(
+        collateralToken.transfer(msg.sender, collateral[account]),
+        "Collateral transfer failed"
+    );
+
+    
+    _burn(account, debt[account]);
+
+   
+    collateral[account] = 0;
+    debt[account] = 0;
+}
+function canLiquidate(address account) public view returns (bool) {
+  
+    int latestPrice = getLatestPrice();
+     uint256 collateralValue = (collateral[account] * uint256(latestPrice) *1e12);
+
+    uint256 debtValue = debt[account] * collateralizationRate;
+
+    return collateralValue < debtValue;
+}
+
 }
