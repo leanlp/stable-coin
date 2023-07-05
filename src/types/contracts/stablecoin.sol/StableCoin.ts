@@ -29,17 +29,21 @@ export interface StableCoinInterface extends Interface {
       | "allowance"
       | "approve"
       | "balanceOf"
+      | "canLiquidate"
       | "collateral"
       | "collateralToken"
       | "collateralizationRate"
+      | "debt"
       | "decimals"
       | "decreaseAllowance"
       | "depositCollateral"
       | "getLatestPrice"
       | "increaseAllowance"
+      | "liquidateIfYouCan"
       | "name"
       | "owner"
       | "renounceOwnership"
+      | "repay"
       | "symbol"
       | "totalSupply"
       | "transfer"
@@ -65,6 +69,10 @@ export interface StableCoinInterface extends Interface {
     values: [AddressLike]
   ): string;
   encodeFunctionData(
+    functionFragment: "canLiquidate",
+    values: [AddressLike]
+  ): string;
+  encodeFunctionData(
     functionFragment: "collateral",
     values: [AddressLike]
   ): string;
@@ -76,6 +84,7 @@ export interface StableCoinInterface extends Interface {
     functionFragment: "collateralizationRate",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "debt", values: [AddressLike]): string;
   encodeFunctionData(functionFragment: "decimals", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "decreaseAllowance",
@@ -93,12 +102,17 @@ export interface StableCoinInterface extends Interface {
     functionFragment: "increaseAllowance",
     values: [AddressLike, BigNumberish]
   ): string;
+  encodeFunctionData(
+    functionFragment: "liquidateIfYouCan",
+    values: [AddressLike]
+  ): string;
   encodeFunctionData(functionFragment: "name", values?: undefined): string;
   encodeFunctionData(functionFragment: "owner", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "renounceOwnership",
     values?: undefined
   ): string;
+  encodeFunctionData(functionFragment: "repay", values: [BigNumberish]): string;
   encodeFunctionData(functionFragment: "symbol", values?: undefined): string;
   encodeFunctionData(
     functionFragment: "totalSupply",
@@ -118,12 +132,16 @@ export interface StableCoinInterface extends Interface {
   ): string;
   encodeFunctionData(
     functionFragment: "withdrawCollateral",
-    values: [BigNumberish]
+    values?: undefined
   ): string;
 
   decodeFunctionResult(functionFragment: "allowance", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "approve", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "balanceOf", data: BytesLike): Result;
+  decodeFunctionResult(
+    functionFragment: "canLiquidate",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "collateral", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "collateralToken",
@@ -133,6 +151,7 @@ export interface StableCoinInterface extends Interface {
     functionFragment: "collateralizationRate",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "debt", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "decimals", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "decreaseAllowance",
@@ -150,12 +169,17 @@ export interface StableCoinInterface extends Interface {
     functionFragment: "increaseAllowance",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(
+    functionFragment: "liquidateIfYouCan",
+    data: BytesLike
+  ): Result;
   decodeFunctionResult(functionFragment: "name", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "owner", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "renounceOwnership",
     data: BytesLike
   ): Result;
+  decodeFunctionResult(functionFragment: "repay", data: BytesLike): Result;
   decodeFunctionResult(functionFragment: "symbol", data: BytesLike): Result;
   decodeFunctionResult(
     functionFragment: "totalSupply",
@@ -282,11 +306,15 @@ export interface StableCoin extends BaseContract {
 
   balanceOf: TypedContractMethod<[account: AddressLike], [bigint], "view">;
 
+  canLiquidate: TypedContractMethod<[account: AddressLike], [boolean], "view">;
+
   collateral: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   collateralToken: TypedContractMethod<[], [string], "view">;
 
   collateralizationRate: TypedContractMethod<[], [bigint], "view">;
+
+  debt: TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
 
   decimals: TypedContractMethod<[], [bigint], "view">;
 
@@ -310,11 +338,23 @@ export interface StableCoin extends BaseContract {
     "nonpayable"
   >;
 
+  liquidateIfYouCan: TypedContractMethod<
+    [account: AddressLike],
+    [void],
+    "nonpayable"
+  >;
+
   name: TypedContractMethod<[], [string], "view">;
 
   owner: TypedContractMethod<[], [string], "view">;
 
   renounceOwnership: TypedContractMethod<[], [void], "nonpayable">;
+
+  repay: TypedContractMethod<
+    [stablecoinAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
 
   symbol: TypedContractMethod<[], [string], "view">;
 
@@ -338,11 +378,7 @@ export interface StableCoin extends BaseContract {
     "nonpayable"
   >;
 
-  withdrawCollateral: TypedContractMethod<
-    [stablecoinAmount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  withdrawCollateral: TypedContractMethod<[], [void], "nonpayable">;
 
   getFunction<T extends ContractMethod = ContractMethod>(
     key: string | FunctionFragment
@@ -366,6 +402,9 @@ export interface StableCoin extends BaseContract {
     nameOrSignature: "balanceOf"
   ): TypedContractMethod<[account: AddressLike], [bigint], "view">;
   getFunction(
+    nameOrSignature: "canLiquidate"
+  ): TypedContractMethod<[account: AddressLike], [boolean], "view">;
+  getFunction(
     nameOrSignature: "collateral"
   ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
   getFunction(
@@ -374,6 +413,9 @@ export interface StableCoin extends BaseContract {
   getFunction(
     nameOrSignature: "collateralizationRate"
   ): TypedContractMethod<[], [bigint], "view">;
+  getFunction(
+    nameOrSignature: "debt"
+  ): TypedContractMethod<[arg0: AddressLike], [bigint], "view">;
   getFunction(
     nameOrSignature: "decimals"
   ): TypedContractMethod<[], [bigint], "view">;
@@ -402,6 +444,9 @@ export interface StableCoin extends BaseContract {
     "nonpayable"
   >;
   getFunction(
+    nameOrSignature: "liquidateIfYouCan"
+  ): TypedContractMethod<[account: AddressLike], [void], "nonpayable">;
+  getFunction(
     nameOrSignature: "name"
   ): TypedContractMethod<[], [string], "view">;
   getFunction(
@@ -410,6 +455,13 @@ export interface StableCoin extends BaseContract {
   getFunction(
     nameOrSignature: "renounceOwnership"
   ): TypedContractMethod<[], [void], "nonpayable">;
+  getFunction(
+    nameOrSignature: "repay"
+  ): TypedContractMethod<
+    [stablecoinAmount: BigNumberish],
+    [void],
+    "nonpayable"
+  >;
   getFunction(
     nameOrSignature: "symbol"
   ): TypedContractMethod<[], [string], "view">;
@@ -435,11 +487,7 @@ export interface StableCoin extends BaseContract {
   ): TypedContractMethod<[newOwner: AddressLike], [void], "nonpayable">;
   getFunction(
     nameOrSignature: "withdrawCollateral"
-  ): TypedContractMethod<
-    [stablecoinAmount: BigNumberish],
-    [void],
-    "nonpayable"
-  >;
+  ): TypedContractMethod<[], [void], "nonpayable">;
 
   getEvent(
     key: "Approval"

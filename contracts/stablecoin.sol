@@ -2,7 +2,6 @@
 pragma solidity ^0.8.14;
 
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./AggregatorV3Interface.sol";
 
@@ -37,7 +36,7 @@ contract StableCoin is ERC20, Ownable {
 
         // Calculate how many stablecoins to mint
         int latestPrice = getLatestPrice();
-        uint256 stablecoinAmount = (collateralAmount * uint256(latestPrice) *1e12) / collateralizationRate;
+        uint256 stablecoinAmount = (collateralAmount * (uint256(latestPrice)/1e6))  / collateralizationRate;
 
         // Increase the user's debt by the minted amount
         debt[msg.sender] += stablecoinAmount; // New
@@ -72,7 +71,7 @@ contract StableCoin is ERC20, Ownable {
     function liquidateIfYouCan(address account) external {
     // Calculate the current value of the account's collateral
     int latestPrice = getLatestPrice();
-    uint256 collateralValue = (collateral[account] * uint256(latestPrice) *1e12);
+    uint256 collateralValue = (collateral[account] * (uint256(latestPrice)/1e6));
 
     // Calculate the current value of the account's debt
     uint256 debtValue = debt[account] * collateralizationRate;
@@ -96,7 +95,7 @@ contract StableCoin is ERC20, Ownable {
 function canLiquidate(address account) public view returns (bool) {
   
     int latestPrice = getLatestPrice();
-     uint256 collateralValue = (collateral[account] * uint256(latestPrice) *1e12);
+     uint256 collateralValue = (collateral[account] * (uint256(latestPrice)/1e6) );
 
     uint256 debtValue = debt[account] * collateralizationRate;
 
