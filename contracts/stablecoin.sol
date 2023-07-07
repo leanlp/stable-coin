@@ -7,24 +7,33 @@ import "./AggregatorV3Interface.sol";
 
 contract StableCoin is ERC20, Ownable {
     IERC20 public collateralToken;
+    IERC20 public collateralToken2;
     AggregatorV3Interface internal priceFeed;
+    AggregatorV3Interface internal priceFeed2;
 
     uint256 public collateralizationRate = 150; // Collateralization rate in percentage
 
     mapping(address => uint256) public collateral;
+    mapping(address => uint256) public collateral2;
     mapping(address => uint256) public debt; // track each address's debt
 
-    constructor(address _collateralToken, address _priceFeed) ERC20("StableCoin", "sSCC") {
+    constructor(address _collateralToken, address _priceFeed, address _collateralToken2, address _priceFeed2) ERC20("StableCoin", "sSCC") {
         collateralToken = IERC20(_collateralToken);
+        collateralToken2 = IERC20(_collateralToken2);
         priceFeed = AggregatorV3Interface(_priceFeed);
+        priceFeed2 = AggregatorV3Interface(_priceFeed2);
     }
 
     function getLatestPrice() public view returns (int) {
         (, int price,,,) = priceFeed.latestRoundData();
         return price;
     }
+    function getLatestPriceWBTC() public view returns (int) {
+        (, int price,,,) = priceFeed2.latestRoundData();
+        return price;
+    }
 
-    function depositCollateral(uint256 collateralAmount) external {        
+    function depositCollateralWeth(uint256 collateralAmount) external {        
         // Transfer collateral tokens to this contract
         require(
             collateralToken.transferFrom(msg.sender, address(this), collateralAmount),
@@ -36,6 +45,27 @@ contract StableCoin is ERC20, Ownable {
 
         // Calculate how many stablecoins to mint
         int latestPrice = getLatestPrice();
+        uint256 stablecoinAmount = (collateralAmount * (uint256(latestPrice)/1e6))  / collateralizationRate;
+
+        // Increase the user's debt by the minted amount
+        debt[msg.sender] += stablecoinAmount; // New
+
+        // Mint the stablecoins to the user
+        _mint(msg.sender, stablecoinAmount);
+    }
+
+     function depositCollateralWBTC(uint256 collateralAmount) external {        
+        // Transfer collateral tokens to this contract
+        require(
+            collateralToken.transferFrom(msg.sender, address(this), collateralAmount),
+            "Collateral token transfer failed"
+        );
+
+        // Increase the collateral amount for the user
+        collateral[msg.sender] += collateralAmount;
+
+        // Calculate how many stablecoins to mint
+        int latestPrice = getLatestPriceWBTC();
         uint256 stablecoinAmount = (collateralAmount * (uint256(latestPrice)/1e6))  / collateralizationRate;
 
         // Increase the user's debt by the minted amount
